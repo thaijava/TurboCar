@@ -1,4 +1,4 @@
-package beam.rocketcar;
+package beam.turbocar;
 
 
 import java.io.*;
@@ -11,6 +11,7 @@ public class MapServer extends Thread {
     static final String COMMAND_REG_CAR = "REG_CAR:";
     static final String COMMAND_MOVE_TO = "MOVE_TO:";
     static final String COMMAND_GET_FRIENDS = "GET_FRIENDS:";
+    static final String COMMAND_GET_ALL_FRIENDS = "GET_ALL_FRIENDS:";
     String hostIP = "localhost";
     int port = 8888;
     Socket socketToHost;
@@ -18,8 +19,6 @@ public class MapServer extends Thread {
     ObjectOutputStream ooOut;
     ObjectInputStream ooIn;
     GameMap gameMap;
-
-    boolean isOnline = false;
 
     Collection<CommandProcessor> carList = new ArrayList<CommandProcessor>();
 
@@ -29,16 +28,12 @@ public class MapServer extends Thread {
 
     }
 
-
     public void connectRemote(String host, int port) throws IOException {
-        socketToHost.close();
+        if(socketToHost != null) socketToHost.close();
 
-        isOnline = false;
         hostIP = host;
         socketToHost = new Socket(hostIP, port);
         ooOut = new ObjectOutputStream(socketToHost.getOutputStream());
-
-        isOnline = true;
 
     }
 
@@ -61,7 +56,6 @@ public class MapServer extends Thread {
             throw new RuntimeException(e);
         }
 
-        isOnline = true;
         while (true) {
             try {
                 Socket clientSocket = serverSocket.accept();
@@ -81,51 +75,74 @@ public class MapServer extends Thread {
                 e.printStackTrace();
             }
         }
-
     }
 
     public String getHost() {
         return hostIP;
     }
 
-    public void carMoveTo(long id, int row, int column) throws IOException {
+    public void carMoveTo(long id, int row, int column, int headAngle) throws IOException {
 
         while (socketToHost == null) {                                // wait until socket ready
             try {
-                sleep(10);
+                System.out.println("  car move to wait socket...");
+                sleep(50);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
         }
 
-        ooOut.writeObject(new Command(COMMAND_MOVE_TO,  id, row, column));
+        ooOut.writeObject(new Command(COMMAND_MOVE_TO,  id, row, column, headAngle ));
     }
 
-    public Command registerCar() throws IOException, ClassNotFoundException{
+    public Command registerCar(Car car) throws IOException, ClassNotFoundException{
 
         while (socketToHost == null) {                                // wait until socket ready
             try {
-                sleep(10);
+                sleep(50);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
         }
 
-        ooOut.writeObject(new Command(COMMAND_REG_CAR, null, null, null));
+        ooOut.writeObject(new Command(COMMAND_REG_CAR, car, null, null));
         ooIn = new ObjectInputStream(socketToHost.getInputStream());
         Command retCommand = (Command) ooIn.readObject();
+        Car localCar = new Car();
+        Car retCar = (Car)retCommand.p1;
+        retCar.setImageRawData(localCar.imageByte);
+        retCommand.p3 = retCar;
 
         return retCommand;
     }
 
-    public void isOnline(boolean state) {
-        isOnline = state;
-    }
-
-    public void readFriends() throws IOException, ClassNotFoundException {
+    public Car[] getFullyFriends()  throws IOException, ClassNotFoundException {
         while (socketToHost == null) {                                // wait until socket ready
             try {
-                sleep(10);
+                sleep(100);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        ooOut.writeObject(new Command(COMMAND_GET_ALL_FRIENDS, null, null, null));
+        ooIn = new ObjectInputStream(socketToHost.getInputStream());
+
+        Command retCommand = (Command) ooIn.readObject();
+        Car carList[]  = (Car[]) retCommand.p1;
+        System.out.println("======= player list =======");
+        for (Car c: carList) {
+            System.out.println("     " + c);
+        }
+        System.out.println("===========================");
+
+        return carList;
+    }
+
+    public CarPos[] getFriends() throws IOException, ClassNotFoundException {
+        while (socketToHost == null) {                                // wait until socket ready
+            try {
+                sleep(100);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
@@ -136,10 +153,13 @@ public class MapServer extends Thread {
         Command retCommand = (Command) ooIn.readObject();
 
         CarPos[]  carPosList = (CarPos[]) retCommand.p1;
+        System.out.println("/////// position list //////");
         for (CarPos c: carPosList) {
             System.out.println(c);
         }
+        System.out.println("///////////////////////////");
 
+        return carPosList;
     }
 
     public static void main(String[] args) {

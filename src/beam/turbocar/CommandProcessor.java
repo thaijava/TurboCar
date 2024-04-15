@@ -1,4 +1,4 @@
-package beam.rocketcar;
+package beam.turbocar;
 
 import java.io.*;
 import java.net.Socket;
@@ -36,14 +36,12 @@ class CommandProcessor extends Thread {
             while (cc.command != null) {
                 switch (cc.command) {
                     case MapServer.COMMAND_REQ_MAP:
-//                        ooOut =  new ObjectOutputStream(clientSocket.getOutputStream());
-//                        int xxx[][] = mapServer.getGameMapObject().getMapData();
-//                        ooOut.writeObject(xxx);
+
                         System.out.println("request map success");
                         break;
 
                     case MapServer.COMMAND_REG_CAR:
-                        car = new Car();
+                        car = (Car) cc.p1;
                         Random r = new Random();
                         int randomCol = r.nextInt(mapServer.getGameMapObject().getColumnSize());
                         int randomRow = r.nextInt(mapServer.getGameMapObject().getRowSize());
@@ -56,7 +54,7 @@ class CommandProcessor extends Thread {
                         car.setLocation(randomRow, randomCol);
 
                         mapServer.carList.add(this);
-                        mapServer.getGameMapObject().getMapData()[1][r.nextInt(10)] = 1;
+
                         retCommand = new Command("register success.", car, mapServer.getGameMapObject().getMapData(), null);
                         ooOut = new ObjectOutputStream(clientSocket.getOutputStream());
                         ooOut.writeObject(retCommand);
@@ -66,7 +64,18 @@ class CommandProcessor extends Thread {
                         long id = (long) cc.p1;
                         int row = (int) cc.p2;
                         int col = (int) cc.p3;
-                        System.out.println("commandProcessor car move to ID:" + id + " row:" + row + " col:" + col);
+                        int headAngle = (int) cc.p4;
+                        System.out.println("car moving ID:" + id + " row:" + row + " col:" + col);
+                        this.car.setLocation(row, col);
+                        this.car.headAngle = headAngle;
+                        break;
+
+                    case MapServer.COMMAND_GET_ALL_FRIENDS:
+                        System.out.println("GET FULLY FRIENDS");
+                        Car carList[] = this.extractCar();
+                        retCommand = new Command("success", carList, null, null);
+                        ooOut = new ObjectOutputStream(clientSocket.getOutputStream());
+                        ooOut.writeObject(retCommand);
                         break;
 
                     case MapServer.COMMAND_GET_FRIENDS:
@@ -85,8 +94,7 @@ class CommandProcessor extends Thread {
                 cc = (Command) ooIn.readObject();
             }
         } catch (IOException e) {
-            System.out.println(">>>> CommandProcessor: HANDLE CLIENT COMMAND FAIL:" + pid);
-            System.out.println(" fail CommandProcessor");
+            System.out.println("Player disconnect. " + pid);
         } catch (ClassNotFoundException e) {
             System.out.println(">>>> CommandProcessor: HANDLE CLIENT COMMAND FAIL: Class not found." + pid);
             System.out.println(" fail class not found");
@@ -96,15 +104,26 @@ class CommandProcessor extends Thread {
     }
 
     private CarPos[] extractCarPos() {
-
         Iterator<CommandProcessor> i = mapServer.carList.iterator();
-
         CarPos ret[] = new CarPos[mapServer.carList.size()];
         int k = 0;
         while (i.hasNext()) {
             CommandProcessor e = i.next();
             if (e.isActive) {
                 ret[k++] = e.car.getPos();
+            }
+        }
+
+        return ret;
+    }
+    private Car[] extractCar() {
+        Iterator<CommandProcessor> i = mapServer.carList.iterator();
+        Car ret[] = new Car[mapServer.carList.size()];
+        int k = 0;
+        while (i.hasNext()) {
+            CommandProcessor e = i.next();
+            if (e.isActive && e.car != null) {
+                ret[k++] = e.car;
             }
         }
 

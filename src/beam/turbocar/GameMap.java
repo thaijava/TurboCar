@@ -1,4 +1,4 @@
-package beam.rocketcar;
+package beam.turbocar;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -9,7 +9,7 @@ public class GameMap implements Serializable{
     int row;
     BufferedImage backgroundImage;
     int column;
-    String fileName = "map.txt";
+    String fileName = "asset/map.txt";
 
     int mapData[][];
 
@@ -36,6 +36,8 @@ public class GameMap implements Serializable{
 
 
     private void initMapFromFile() throws IOException {
+
+        System.out.println("   TRY TO OPEN:" + fileName);
         BufferedReader br = new BufferedReader(new FileReader(fileName));
 
         // first line contain map size
@@ -50,8 +52,10 @@ public class GameMap implements Serializable{
             this.column = w;
             this.row = h;
 
-            String allLine[] = new String[h];
-            String space = "0".repeat(w);
+            String allLine[] = new String[row];
+
+            String space = "00000000000000000000";
+            while (space.length() < column) space = space + space;
 
             for (int j = 0; j < row; j++) {
                 line = br.readLine();
@@ -100,8 +104,8 @@ public class GameMap implements Serializable{
     }
 
     public BufferedImage getBackgroundImage() {
-        int w = column * GameMapComponent.TILE_SIZE;
-        int h = row * GameMapComponent.TILE_SIZE;
+        int w = column * TurboCarComponent.TILE_SIZE;
+        int h = row * TurboCarComponent.TILE_SIZE;
 
         if (this.backgroundImage == null) {
             System.out.println(">>>> GameMap.java REBUILD MAP.");
@@ -131,8 +135,8 @@ public class GameMap implements Serializable{
 
                     }
 
-                    g.drawImage(bbb, j * GameMapComponent.TILE_SIZE, i * GameMapComponent.TILE_SIZE,
-                            GameMapComponent.TILE_SIZE, GameMapComponent.TILE_SIZE, null);
+                    g.drawImage(bbb, j * TurboCarComponent.TILE_SIZE, i * TurboCarComponent.TILE_SIZE,
+                            TurboCarComponent.TILE_SIZE, TurboCarComponent.TILE_SIZE, null);
                 }
 
             }

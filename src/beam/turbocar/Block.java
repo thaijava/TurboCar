@@ -1,18 +1,24 @@
-package beam.rocketcar;
+package beam.turbocar;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.util.Random;
 
 public class Block implements  Serializable{
     static final int TYPE_BACKGROUND=0;
     static final int TYPE_WALL=1;
     static final int TYPE_CAR=9;
     byte[] imageByte;
+
+    long id;
     int row, column;
     int type = TYPE_BACKGROUND;
 
+
     public Block() {
+        id = System.nanoTime() * 100;
+        id += (new Random()).nextInt(100);
     }
 
     public void setLocation(int row, int column){
@@ -47,7 +53,7 @@ public class Block implements  Serializable{
     }
 
     public BufferedImage getImage() {
-        BufferedImage ret =null;
+        BufferedImage ret = null;
         try {
             ByteArrayInputStream byteStream = new ByteArrayInputStream(imageByte);
             ret = ImageIO.read(byteStream);
@@ -56,5 +62,9 @@ public class Block implements  Serializable{
         }
 
         return ret;
+    }
+
+    public void setImageRawData(byte[] data) {
+        imageByte = data;
     }
 }
