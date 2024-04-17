@@ -11,6 +11,8 @@ public class Car extends Block {
 
     int headAngle = 0;
 
+     int score = 0;
+
 
     public Car() {
         super();
@@ -21,7 +23,8 @@ public class Car extends Block {
     }
 
     public String toString() {
-        return "id:" + id + " row:" + row + " col:" + column;
+        return "id:" + id + " row:" + row +
+                " col:" + column + " score:" + score;
     }
 
     @Override

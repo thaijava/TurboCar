@@ -28,6 +28,7 @@ public class MapServer extends Thread {
 
     }
 
+
     public void connectRemote(String host, int port) throws IOException {
         if(socketToHost != null) socketToHost.close();
 
