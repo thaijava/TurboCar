@@ -6,15 +6,15 @@ import java.io.IOException;
 import java.util.HashMap;
 
 public class UpdateMeFriendAndItem extends Thread {
-    MapServer mapServer;
+    GameServer gameServer;
     private Car car;
     private Car[] carList;
     private CarPos[] carPosList;
 
     private HashMap<Long, BufferedImage> outfitCache = new HashMap<>();
 
-    public UpdateMeFriendAndItem(Car car, MapServer mapServer) {
-        this.mapServer = mapServer;
+    public UpdateMeFriendAndItem(Car car, GameServer gameServer) {
+        this.gameServer = gameServer;
         this.car = car;
 
     }
@@ -30,7 +30,7 @@ public class UpdateMeFriendAndItem extends Thread {
             while (true) {
                 try {
                     if (oldRow != car.getRow() || oldCol != car.getColumn()) {
-                        mapServer.carMoveTo(car.getId(), car.getRow(), car.getColumn(), car.getHeadAngle());
+                        gameServer.carMoveTo(car.getId(), car.getRow(), car.getColumn(), car.getHeadAngle());
                         oldCol = car.getColumn();
                         oldRow = car.getRow();
                     }
@@ -39,14 +39,14 @@ public class UpdateMeFriendAndItem extends Thread {
                     delayTick2++;
 
                     if(delayTick1 > 30) {
-                        this.carList = mapServer.getFullyFriends();
+                        this.carList = gameServer.getFullyFriends();
                         buildOutfitCache();
                         System.out.println("build outfitcache done...");
                         delayTick1 = 0;
                     }
 
                     if(delayTick2 > 2) {
-                        this.carPosList = mapServer.getFriends();
+                        this.carPosList = gameServer.getFriends();
                         delayTick2 = 0;
                     }
 

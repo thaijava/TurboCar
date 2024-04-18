@@ -6,41 +6,45 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.ConnectException;
 
 
-public class TurboCarComponent extends JComponent implements Runnable, KeyListener, ComponentListener {
+public class TurboCarComponent extends JPanel implements Runnable, KeyListener, ComponentListener {
     int fps = 110;                                               //       FPS
     public static int BASE_TILE_SIZE = 16;                  // one block 16x16
-    public static double scale = 1;                         //     SCALE
+    public static final double scale = 1;                         //     SCALE
     public static int TILE_SIZE = (int) (BASE_TILE_SIZE * scale);
+
+    public static final double initialScale = 2.5;
     boolean upPressed = false;
     boolean downPressed = false;
     boolean leftPressed = false;
     boolean rightPressed = false;
     boolean switch01 = false;
     int TARGET_TIME = 1000000000 / fps;
+
+    String serverName = "localhost";
+
     UpdateMeFriendAndItem updateMeFriendAndItems;
     Car car;
     BufferedImage carImage = null;
     Thread mainLoopThread;
-    GameMap gameMap;
-    MapServer server;
+    GameMap gameMap = new GameMap();
+    GameServer server;
     Dimension selfSize = new Dimension(400, 400);
 
 
-    public TurboCarComponent( ) throws IOException, ClassNotFoundException{
-
+    public TurboCarComponent() throws IOException, ClassNotFoundException {
         gameMap = new GameMap();
 
         init();  // graphic component size
 
-        server = new MapServer(gameMap, 8888);
+
+        server = new GameServer(gameMap, 8888);
         server.start();
-        while(server.socketToHost == null) {
+        while (server.socketToHost == null) {
             try {
                 Thread.sleep(50);
             } catch (InterruptedException e) {
@@ -49,8 +53,8 @@ public class TurboCarComponent extends JComponent implements Runnable, KeyListen
         }
         // 1. start server
 
-        server.connectRemote("localhost", 8888);
-       // 2. crate socket communication
+        server.connectRemote(serverName, 8888);
+        // 2. crate socket communication
 
         Command retComand = server.registerCar(new Car());
         car = (Car) retComand.p1;
@@ -66,13 +70,23 @@ public class TurboCarComponent extends JComponent implements Runnable, KeyListen
 
     private void init() {
 
+
         mainLoopThread = new Thread(this);
+
         mainLoopThread.start();
 
         this.addKeyListener(this);
 
         this.addComponentListener(this);
 
+    }
+
+
+    public Dimension getPrefferedSize() {
+        int minX = (int)(TILE_SIZE * gameMap.getColumnSize() * initialScale);
+        int minY = ((int) (TILE_SIZE * gameMap.getRowSize() * initialScale));
+
+        return new Dimension(minX, minY);
     }
 
 
@@ -243,7 +257,7 @@ public class TurboCarComponent extends JComponent implements Runnable, KeyListen
         int carSizeX = (int) (TILE_SIZE / rescaleX);
         int carSizeY = (int) (TILE_SIZE / rescaleY);
 
-        updateMeFriendAndItems.drawItems(g, rescaleX, rescaleY, carSizeX, carSizeY );
+        updateMeFriendAndItems.drawItems(g, rescaleX, rescaleY, carSizeX, carSizeY);
 
         BufferedImage goodImage = Car.rotate(carImage, car.headAngle);
         g.drawImage(goodImage, (int) (car.x / rescaleX), (int) (car.y / rescaleY), carSizeX, carSizeY, null);
@@ -253,6 +267,16 @@ public class TurboCarComponent extends JComponent implements Runnable, KeyListen
 
     }
 
+    public void actionConnect(String hostName) throws IOException , ClassNotFoundException{
+        server.connectRemote(hostName, 8888);
+
+        Command retCommand = server.registerCar(new Car());
+        Car ccc = (Car) retCommand.p1;
+        car = ccc;
+
+        gameMap = new GameMap((int[][]) retCommand.p2);
+        updateMeFriendAndItems.setCar(ccc);
+    }
 
     public static void main(String[] args) {
         JFrame f = new JFrame();
@@ -284,7 +308,7 @@ public class TurboCarComponent extends JComponent implements Runnable, KeyListen
             if (e.getKeyChar() == 'x') {
                 System.out.println(" PRESS FUCKING X");
 
-                server.connectRemote("localhost", 8888);
+                server.connectRemote(serverName, 8888);
 
                 Command retCommand = server.registerCar(new Car());
                 car = (Car) retCommand.p1;
@@ -353,7 +377,6 @@ public class TurboCarComponent extends JComponent implements Runnable, KeyListen
             h = 400;
 
         selfSize.setSize(w, h);
-
     }
 
     @Override

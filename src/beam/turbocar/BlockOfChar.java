@@ -9,4 +9,7 @@ public class BlockOfChar extends Block{
         this.charString = charString;
     }
 
+    public String toString() {
+        return  charString + "," + row + "," + column;
+    }
 }

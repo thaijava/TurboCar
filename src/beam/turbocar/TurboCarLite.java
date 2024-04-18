@@ -21,12 +21,13 @@ public class TurboCarLite extends JComponent implements Runnable, KeyListener, C
     boolean rightPressed = false;
     boolean switch01 = false;
     int TARGET_TIME = 1000000000 / fps;
+    String serverName = "localhost";
     UpdateMeFriendAndItem updateMeFriendAndItems;
     Car car;
     BufferedImage carImage = null;
     Thread mainLoopThread;
     GameMap gameMap;
-    MapServer server;
+    GameServer server;
     Dimension selfSize = new Dimension(400, 400);
 
 
@@ -36,8 +37,8 @@ public class TurboCarLite extends JComponent implements Runnable, KeyListener, C
 
         init();  // graphic component size
 
-        server = new MapServer(gameMap, 8888);
-        server.connectRemote("localhost", 8888);
+        server = new GameServer(gameMap, 8888);
+        server.connectRemote(serverName, 8888);
 
         Command retComand = server.registerCar(new Car());
         car = (Car) retComand.p1;
@@ -271,7 +272,7 @@ public class TurboCarLite extends JComponent implements Runnable, KeyListener, C
             if (e.getKeyChar() == 'x') {
                 System.out.println(" PRESS FUCKING X");
 
-                server.connectRemote("localhost", 8888);
+                server.connectRemote(serverName, 8888);
 
                 Command retCommand = server.registerCar(new Car());
                 car = (Car) retCommand.p1;

@@ -6,13 +6,13 @@ import java.net.*;
 import java.util.*;
 
 
-public class MapServer extends Thread {
+public class GameServer extends Thread {
     static final String COMMAND_REQ_MAP = "REQ_MAP:";
     static final String COMMAND_REG_CAR = "REG_CAR:";
     static final String COMMAND_MOVE_TO = "MOVE_TO:";
     static final String COMMAND_GET_FRIENDS = "GET_FRIENDS:";
     static final String COMMAND_GET_ALL_FRIENDS = "GET_ALL_FRIENDS:";
-    String hostIP = "localhost";
+    String hostName = "localhost";
     int port = 8888;
     Socket socketToHost;
 
@@ -22,7 +22,7 @@ public class MapServer extends Thread {
 
     Collection<CommandProcessor> carList = new ArrayList<CommandProcessor>();
 
-    public MapServer(GameMap gameMap, int port) throws IOException {
+    public GameServer(GameMap gameMap, int port) throws IOException {
         this.gameMap = gameMap;
         this.port = port;
 
@@ -32,8 +32,8 @@ public class MapServer extends Thread {
     public void connectRemote(String host, int port) throws IOException {
         if(socketToHost != null) socketToHost.close();
 
-        hostIP = host;
-        socketToHost = new Socket(hostIP, port);
+        hostName = host;
+        socketToHost = new Socket(hostName, port);
         ooOut = new ObjectOutputStream(socketToHost.getOutputStream());
 
     }
@@ -49,7 +49,7 @@ public class MapServer extends Thread {
             serverSocket = new ServerSocket(port);
 
             System.out.println(">>>> GAME SERVER STARTED..." + port);
-            socketToHost = new Socket(hostIP, port);
+            socketToHost = new Socket(hostName, port);
             ooOut = new ObjectOutputStream(socketToHost.getOutputStream());
 
             System.out.println(">>>> success");
@@ -79,7 +79,7 @@ public class MapServer extends Thread {
     }
 
     public String getHost() {
-        return hostIP;
+        return hostName;
     }
 
     public void carMoveTo(long id, int row, int column, int headAngle) throws IOException {
@@ -167,13 +167,13 @@ public class MapServer extends Thread {
 
         try {
             GameMap map = new GameMap();
-            MapServer server = new MapServer(map, 8888);
+            GameServer server = new GameServer(map, 8888);
             server.start();
 
-            Socket socketToHost = new Socket("localhost", 8888);
+            Socket socketToHost = new Socket("192.168.0.138", 8888);
 
             ObjectOutputStream ooOut = new ObjectOutputStream(socketToHost.getOutputStream());
-            ooOut.writeObject(MapServer.COMMAND_REG_CAR + ", 100, 111, 222");
+            ooOut.writeObject(GameServer.COMMAND_REG_CAR + ", 100, 111, 222");
 
             System.out.println("Write success");
 

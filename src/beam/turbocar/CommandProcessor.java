@@ -8,7 +8,7 @@ import java.util.Random;
 class CommandProcessor extends Thread {
     public static int PS_ID;
     private Socket clientSocket;
-    MapServer mapServer;
+    GameServer server;
 
     Car car;
 
@@ -16,9 +16,9 @@ class CommandProcessor extends Thread {
 
     boolean isActive = true;
 
-    public CommandProcessor(Socket clientSocket, MapServer mapServer) {
+    public CommandProcessor(Socket clientSocket, GameServer gameServer) {
         this.clientSocket = clientSocket;
-        this.mapServer = mapServer;
+        this.server = gameServer;
 
         pid = PS_ID;
         PS_ID++;
@@ -35,32 +35,32 @@ class CommandProcessor extends Thread {
             System.out.println(cc.command);
             while (cc.command != null) {
                 switch (cc.command) {
-                    case MapServer.COMMAND_REQ_MAP:
+                    case GameServer.COMMAND_REQ_MAP:
 
                         System.out.println("request map success");
                         break;
 
-                    case MapServer.COMMAND_REG_CAR:
+                    case GameServer.COMMAND_REG_CAR:
                         car = (Car) cc.p1;
                         Random r = new Random();
-                        int randomCol = r.nextInt(mapServer.getGameMapObject().getColumnSize());
-                        int randomRow = r.nextInt(mapServer.getGameMapObject().getRowSize());
+                        int randomCol = r.nextInt(server.getGameMapObject().getColumnSize());
+                        int randomRow = r.nextInt(server.getGameMapObject().getRowSize());
 
-                        while (!mapServer.getGameMapObject().isBackgroundType(randomRow, randomCol)) {
-                            randomCol = r.nextInt(mapServer.getGameMapObject().getColumnSize());
-                            randomRow = r.nextInt(mapServer.getGameMapObject().getRowSize());
+                        while (!server.getGameMapObject().isBackgroundType(randomRow, randomCol)) {
+                            randomCol = r.nextInt(server.getGameMapObject().getColumnSize());
+                            randomRow = r.nextInt(server.getGameMapObject().getRowSize());
 
                         }
                         car.setLocation(randomRow, randomCol);
 
-                        mapServer.carList.add(this);
+                        server.carList.add(this);
 
-                        retCommand = new Command("register success.", car, mapServer.getGameMapObject().getMapData(), null);
+                        retCommand = new Command("register success.", car, server.getGameMapObject().getMapData(), null);
                         ooOut = new ObjectOutputStream(clientSocket.getOutputStream());
                         ooOut.writeObject(retCommand);
                         break;
 
-                    case MapServer.COMMAND_MOVE_TO:
+                    case GameServer.COMMAND_MOVE_TO:
                         long id = (long) cc.p1;
                         int row = (int) cc.p2;
                         int col = (int) cc.p3;
@@ -70,7 +70,7 @@ class CommandProcessor extends Thread {
                         this.car.headAngle = headAngle;
                         break;
 
-                    case MapServer.COMMAND_GET_ALL_FRIENDS:
+                    case GameServer.COMMAND_GET_ALL_FRIENDS:
                         System.out.println("GET FULLY FRIENDS");
                         Car carList[] = this.extractCar();
                         retCommand = new Command("success", carList, null, null);
@@ -78,7 +78,7 @@ class CommandProcessor extends Thread {
                         ooOut.writeObject(retCommand);
                         break;
 
-                    case MapServer.COMMAND_GET_FRIENDS:
+                    case GameServer.COMMAND_GET_FRIENDS:
                         System.out.println("HELLO GET FRIEND");
                         CarPos[] carPosList = this.extractCarPos();
                         retCommand = new Command("success", carPosList, null, null);
@@ -104,8 +104,8 @@ class CommandProcessor extends Thread {
     }
 
     private CarPos[] extractCarPos() {
-        Iterator<CommandProcessor> i = mapServer.carList.iterator();
-        CarPos ret[] = new CarPos[mapServer.carList.size()];
+        Iterator<CommandProcessor> i = server.carList.iterator();
+        CarPos ret[] = new CarPos[server.carList.size()];
         int k = 0;
         while (i.hasNext()) {
             CommandProcessor e = i.next();
@@ -117,8 +117,8 @@ class CommandProcessor extends Thread {
         return ret;
     }
     private Car[] extractCar() {
-        Iterator<CommandProcessor> i = mapServer.carList.iterator();
-        Car ret[] = new Car[mapServer.carList.size()];
+        Iterator<CommandProcessor> i = server.carList.iterator();
+        Car ret[] = new Car[server.carList.size()];
         int k = 0;
         while (i.hasNext()) {
             CommandProcessor e = i.next();

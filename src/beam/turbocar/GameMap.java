@@ -6,9 +6,9 @@ import java.io.*;
 import java.util.StringTokenizer;
 
 public class GameMap implements Serializable{
-    int row;
+    private int row;
     BufferedImage backgroundImage;
-    int column;
+    private int column;
     String fileName = "asset/map.txt";
 
     int mapData[][];
@@ -17,13 +17,12 @@ public class GameMap implements Serializable{
     BlockBackground blockBackground = new BlockBackground();
     BlockWall blockWall = new BlockWall();
 
-
     //////////////////////////////////////////////////////////////////
+
+
     public GameMap() throws IOException {
 
         initMapFromFile();
-
-
     }
 
     public GameMap(int[][] mapData) {
@@ -150,7 +149,7 @@ public class GameMap implements Serializable{
     public static void main(String[] args) {
         try {
             GameMap map = new GameMap();
-            MapServer server = new MapServer(map, 8888);
+            GameServer server = new GameServer(map, 8888);
             server.start();
 
             Car c = new Car();
