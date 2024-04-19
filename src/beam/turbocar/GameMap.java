@@ -95,6 +95,7 @@ public class GameMap implements Serializable{
 
     public boolean isWallType(int r, int c) throws IndexOutOfBoundsException {
         if(mapData[r][c] == Block.TYPE_WALL) return true;
+
         return false;
     }
     public boolean isBackgroundType(int r, int c) throws IndexOutOfBoundsException {

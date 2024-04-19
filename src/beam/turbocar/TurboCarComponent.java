@@ -263,8 +263,12 @@ public class TurboCarComponent extends JPanel implements Runnable, KeyListener, 
         g.drawImage(goodImage, (int) (car.x / rescaleX), (int) (car.y / rescaleY), carSizeX, carSizeY, null);
         g.setColor(Color.white);
         g.drawRect((int) (car.x / rescaleX), (int) (car.y / rescaleY), carSizeX, carSizeY);
-        switch01 = !switch01;
 
+        if (updateMeFriendAndItems.stopFlag) {
+            g.setColor(Color.red);
+        } else g.setColor(Color.green);
+        g.fillArc(5,5,10,10,0,360);
+        switch01 = !switch01;
     }
 
     public void actionConnect(String hostName) throws IOException , ClassNotFoundException{
@@ -275,7 +279,11 @@ public class TurboCarComponent extends JPanel implements Runnable, KeyListener, 
         car = ccc;
 
         gameMap = new GameMap((int[][]) retCommand.p2);
-        updateMeFriendAndItems.setCar(ccc);
+        updateMeFriendAndItems.stopFlag = true;
+
+        updateMeFriendAndItems = new UpdateMeFriendAndItem(ccc, server);
+        updateMeFriendAndItems.start();
+      //  updateMeFriendAndItems.setCar(ccc);
     }
 
     public static void main(String[] args) {

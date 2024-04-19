@@ -20,7 +20,7 @@ public class GameServer extends Thread {
     ObjectInputStream ooIn;
     GameMap gameMap;
 
-    Collection<CommandProcessor> carList = new ArrayList<CommandProcessor>();
+    Collection<CommandProcessor> carList = new ArrayList<>();
 
     public GameServer(GameMap gameMap, int port) throws IOException {
         this.gameMap = gameMap;

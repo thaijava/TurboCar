@@ -110,16 +110,20 @@ public class TurboCar extends JFrame {
     }
 
     private void connecMenuSelected()  {
-        // TODO add your handling code here:
         System.out.println("Hello connect");
 
         connectMenu.setSelected(false);
 
-        String hostName = JOptionPane.showInputDialog("Remote Host:", "localhost");
+        String inputHostName = JOptionPane.showInputDialog("Remote Host:", "localhost");
+
+        if (inputHostName == null) return;
+
+        if (inputHostName.equals("localhost")) return;
+
         try {
-            turboCarComponent.actionConnect(hostName);
+            turboCarComponent.actionConnect(inputHostName);
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, "Can't remote host:" + hostName);
+            JOptionPane.showMessageDialog(this, "Can't remote host:" + inputHostName);
         } catch (ClassNotFoundException e) {
             JOptionPane.showMessageDialog(this, "Internal error!!!");
         }

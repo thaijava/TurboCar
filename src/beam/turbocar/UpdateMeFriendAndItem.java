@@ -13,6 +13,8 @@ public class UpdateMeFriendAndItem extends Thread {
 
     private HashMap<Long, BufferedImage> outfitCache = new HashMap<>();
 
+    boolean stopFlag = false;
+
     public UpdateMeFriendAndItem(Car car, GameServer gameServer) {
         this.gameServer = gameServer;
         this.car = car;
@@ -27,7 +29,7 @@ public class UpdateMeFriendAndItem extends Thread {
         int delayTick2 =0;
 
         try {
-            while (true) {
+            while (true && !stopFlag) {
                 try {
                     if (oldRow != car.getRow() || oldCol != car.getColumn()) {
                         gameServer.carMoveTo(car.getId(), car.getRow(), car.getColumn(), car.getHeadAngle());
@@ -52,8 +54,12 @@ public class UpdateMeFriendAndItem extends Thread {
 
                 } catch (IOException e) {
                     System.out.println("!!! Server down...");
+                    stopFlag = true;
+
                 } catch (ClassNotFoundException e) {
                     System.out.println("!!! update items object transfer error...");
+                    stopFlag = true;
+
                 }
             }
         } catch (InterruptedException ex) {
