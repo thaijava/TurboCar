@@ -7,12 +7,12 @@ import java.util.ArrayList;
 import java.util.Random;
 import java.util.StringTokenizer;
 
-public class Rule implements Runnable {
+public class Rule extends Thread {
 
     public static final int COUNT_DOWN = 3;
-    public static final int GAME_TIME = 180;
+    public static final int GAME_TIME = 120;
     public static final int STATE_END = 0;
-    public static final int STATE_COUNTDONW = 1;
+    public static final int STATE_COUNTDOWN = 1;
     public static final int STATE_RUNNING = 2;
     GameServer server;
 
@@ -21,16 +21,16 @@ public class Rule implements Runnable {
     Thread clocker;
 
     int currentState = STATE_END;
-    int remainTime = 0;
+    private int remainTime = 0;
 
     private StringTokenizer wordList;
 
-    private int blockPointer=0;
     private boolean fetchNext = true;
     private int sumOfTick=0;
+    private int consumeDelay = 0;
 
-    String currentGamingWord;
-    String currentGamingMeaning;
+    String currentGamingWord="";
+    String currentGamingMeaning="";
 
     ArrayList<BlockOfChar> blockList;
 
@@ -40,9 +40,12 @@ public class Rule implements Runnable {
         clocker.start();
     }
 
-
     public boolean startNewGame() {
-        // random word;
+        currentGamingWord = "RESTART";
+        currentGamingMeaning = "";
+
+        this.scambleBlock();
+        currentState = Rule.STATE_END;
 
         String content = "";
         try {
@@ -65,7 +68,7 @@ public class Rule implements Runnable {
         fetchNext = true;
 
         remainTime = GAME_TIME;
-        currentState = STATE_COUNTDONW;
+        currentState = STATE_COUNTDOWN;
 
         return true;
 
@@ -76,11 +79,11 @@ public class Rule implements Runnable {
             while (true) {
                 switch (currentState) {
                     case STATE_END:
-                        Thread.sleep(10);
+                        Thread.sleep(100);
                         break;
-                    case STATE_COUNTDONW:
+                    case STATE_COUNTDOWN:
                         int toZero = COUNT_DOWN;
-                        while (toZero > 0) {
+                        while (toZero >= 0) {
                             currentGamingWord = ""+toZero;
                             currentGamingMeaning = "";
                             this.scambleBlock();
@@ -90,6 +93,7 @@ public class Rule implements Runnable {
                             toZero--;
                         }
 
+                        consume();
                         currentState = STATE_RUNNING;
                         break;
                     case STATE_RUNNING:
@@ -113,17 +117,18 @@ public class Rule implements Runnable {
                         }
 
 
-                        Thread.sleep(100);
+                        Thread.sleep(300);
                         sumOfTick++;
-                        if(sumOfTick >= 10) {
+                        consumeDelay++;
+
+                        if(sumOfTick >= 3) {    // count down remain time
                             sumOfTick = 0;
                             remainTime--;
 
                             System.out.println("Game running..." + remainTime + "--->"+currentGamingWord + " -- " + currentGamingMeaning);
                             BlockOfChar currentBlock = this.getCurrentBlock();
-                            System.out.println(currentBlock);
+                            System.out.println("  " + currentBlock);
 
-                            consume();
                         }
 
                         if (remainTime == 0) {
@@ -141,16 +146,18 @@ public class Rule implements Runnable {
 
     public void consume() {
 
-        blockPointer++;
-        if (blockPointer >= currentGamingWord.length()) {
-            blockPointer =0;
+        blockList.remove(0);
+
+        if (blockList.size() == 0) {
             fetchNext = true;
         }
 
     }
 
     public BlockOfChar getCurrentBlock() {
-        return blockList.get( blockPointer );
+        if (blockList == null) return new BlockOfChar("", 0, server.gameMap.getColumnSize() -1);
+        if (blockList.size() == 0 ) return new BlockOfChar("", 0, server.gameMap.getColumnSize() -1);
+        return blockList.get( 0 );
     }
 
     private void scambleBlock() {
@@ -173,7 +180,7 @@ public class Rule implements Runnable {
 
     private String nextWord() {
         if (!wordList.hasMoreElements())
-            return "EndOfWord END OF WORD TO COLLECT";
+            return "NoMoreWord NO MORE WORD TO COLLECT.";
 
         return wordList.nextToken();
     }
@@ -181,7 +188,7 @@ public class Rule implements Runnable {
     public static void main(String[] args) {
         try {
             GameMap map = new GameMap();
-            GameServer server = new GameServer(map, 8888);
+            GameServer server = new GameServer(map);
 
             Rule rul = new Rule(server);
 
@@ -197,4 +204,17 @@ public class Rule implements Runnable {
 
     }
 
+    public int getRemainTime() {
+        return remainTime;
+    }
+
+    public String getCurrentGameingWord() {
+
+        return currentGamingWord + "   " + currentGamingMeaning;
+    }
+
+    public ArrayList<BlockOfChar> getBlockList() {
+
+        return blockList;
+    }
 }

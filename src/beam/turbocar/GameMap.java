@@ -150,7 +150,7 @@ public class GameMap implements Serializable{
     public static void main(String[] args) {
         try {
             GameMap map = new GameMap();
-            GameServer server = new GameServer(map, 8888);
+            GameServer server = new GameServer(map);
             server.start();
 
             Car c = new Car();

@@ -67,4 +67,6 @@ public class Block implements  Serializable{
     public void setImageRawData(byte[] data) {
         imageByte = data;
     }
+
+
 }

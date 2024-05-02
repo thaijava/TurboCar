@@ -14,7 +14,7 @@ class CommandProcessor extends Thread {
 
     int pid;
 
-    boolean isActive = true;
+    boolean activeFlag = true;
 
     public CommandProcessor(Socket clientSocket, GameServer gameServer) {
         this.clientSocket = clientSocket;
@@ -31,16 +31,17 @@ class CommandProcessor extends Thread {
         try {
             ObjectOutputStream ooOut;
             ObjectInputStream ooIn = new ObjectInputStream(clientSocket.getInputStream());
+
             Command cc = (Command) ooIn.readObject();
             System.out.println(cc.command);
             while (cc.command != null) {
                 switch (cc.command) {
-                    case GameServer.COMMAND_REQ_MAP:
+                    case Command.COMMAND_REQ_MAP:
 
                         System.out.println("request map success");
                         break;
 
-                    case GameServer.COMMAND_REG_CAR:
+                    case Command.COMMAND_REG_CAR:
                         car = (Car) cc.p1;
                         Random r = new Random();
                         int randomCol = r.nextInt(server.getGameMapObject().getColumnSize());
@@ -52,6 +53,7 @@ class CommandProcessor extends Thread {
 
                         }
                         car.setLocation(randomRow, randomCol);
+                        car.setName("player " + pid);
 
                         server.carList.add(this);
 
@@ -60,31 +62,57 @@ class CommandProcessor extends Thread {
                         ooOut.writeObject(retCommand);
                         break;
 
-                    case GameServer.COMMAND_MOVE_TO:
-                        long id = (long) cc.p1;
-                        int row = (int) cc.p2;
-                        int col = (int) cc.p3;
-                        int headAngle = (int) cc.p4;
-                        System.out.println("car moving ID:" + id + " row:" + row + " col:" + col);
-                        this.car.setLocation(row, col);
-                        this.car.headAngle = headAngle;
+                    case Command.COMMAND_MOVE_TO:
+
+                        int tmprow = (int) cc.p1;
+                        int tmpcol = (int) cc.p2;
+                        int tmphead = (int) cc.p3;
+
+                        this.car.setLocation(tmprow, tmpcol);
+                        this.car.headAngle = tmphead;
+
+                        String result = "success";
+                        BlockOfChar currentBlock = server.rule.getCurrentBlock();
+
+                        if(currentBlock.getRow() == car.getRow() &&
+                            currentBlock.getColumn() == car.getColumn()) {
+                            result = "hit";
+                            server.rule.consume();
+                        }
+
+                        retCommand = new Command(result, null, null, null);
+                        ooOut = new ObjectOutputStream(clientSocket.getOutputStream());
+                        ooOut.writeObject(retCommand);
                         break;
 
-                    case GameServer.COMMAND_GET_ALL_FRIENDS:
-                        System.out.println("GET FULLY FRIENDS");
+                    case Command.COMMAND_GET_ALL_FRIENDS:
                         Car carList[] = this.extractCar();
-                        retCommand = new Command("success", carList, null, null);
+                        retCommand = new Command("success", carList, server.rule.getRemainTime(), server.rule.getCurrentGameingWord());
+
                         ooOut = new ObjectOutputStream(clientSocket.getOutputStream());
                         ooOut.writeObject(retCommand);
                         break;
 
-                    case GameServer.COMMAND_GET_FRIENDS:
-                        System.out.println("HELLO GET FRIEND");
+                    case Command.COMMAND_GET_FRIENDS:
                         CarPos[] carPosList = this.extractCarPos();
-                        retCommand = new Command("success", carPosList, null, null);
+                        retCommand = new Command("success", carPosList, server.rule.currentState, server.rule.getBlockList());
 
                         ooOut = new ObjectOutputStream(clientSocket.getOutputStream());
                         ooOut.writeObject(retCommand);
+
+                        break;
+                    case Command.COMMAND_START_GAME:
+                        boolean success = server.rule.startNewGame();
+                        if (success)
+                            retCommand = new Command("success", null, null, null);
+                        else
+                            retCommand = new Command("error", null, null, null);
+
+                        ooOut = new ObjectOutputStream(clientSocket.getOutputStream());
+                        ooOut.writeObject(retCommand);
+                        break;
+                    case Command.COMMAND_BYE_BYE:
+                        activeFlag = false;
                         break;
                     default:
                         System.out.println(">>>> MAP SERVER: UNKNOWN COMMAND, " + cc.command);
@@ -100,7 +128,7 @@ class CommandProcessor extends Thread {
             System.out.println(" fail class not found");
         }
 
-        isActive = false;
+        activeFlag = false;
     }
 
     private CarPos[] extractCarPos() {
@@ -109,7 +137,7 @@ class CommandProcessor extends Thread {
         int k = 0;
         while (i.hasNext()) {
             CommandProcessor e = i.next();
-            if (e.isActive) {
+            if (e.activeFlag) {
                 ret[k++] = e.car.getPos();
             }
         }
@@ -122,7 +150,7 @@ class CommandProcessor extends Thread {
         int k = 0;
         while (i.hasNext()) {
             CommandProcessor e = i.next();
-            if (e.isActive && e.car != null) {
+            if (e.activeFlag && e.car != null) {
                 ret[k++] = e.car;
             }
         }

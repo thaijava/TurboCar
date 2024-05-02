@@ -1,17 +1,38 @@
 package beam.turbocar;
 
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.net.URL;
 
 public class Car extends Block {
 
-    int speed = TurboCarComponent.TILE_SIZE / 15;           // SPEED
+    public static void playSound(String filename) {
+        URL resource = ClassLoader.getSystemClassLoader().getResource(filename);
+        try {
+            final Clip clip = (Clip) AudioSystem.getLine(new Line.Info(Clip.class));
+            clip.addLineListener(event -> {
+                if (event.getType() == LineEvent.Type.STOP) {
+                    clip.close();
+                }
+            });
+            clip.open(AudioSystem.getAudioInputStream(resource));
+            clip.start();
+        } catch (Exception e) {
+            System.out.println("Failed to play sound " + filename);
+        }
+    }
+
+    int speed = TurboCarComponent.TILE_SIZE / 10;           // SPEED
 
     int x, y;
 
     int headAngle = 0;
 
-     int score = 0;
+    int score = 0;
+
+    String name = "player0";
 
 
     public Car() {
@@ -63,12 +84,17 @@ public class Car extends Block {
     }
 
     public long getId() {
-        return id;
+        long ret = Long.valueOf(id);
+        return ret;
     }
 
     public CarPos getPos() {
 
         return new CarPos(id, row, column, headAngle);
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public static BufferedImage rotate(BufferedImage img, int angle) {
@@ -79,4 +105,6 @@ public class Car extends Block {
 
         return newImage;
     }
+
+
 }

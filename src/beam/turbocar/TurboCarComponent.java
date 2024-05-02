@@ -8,89 +8,81 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.net.ConnectException;
+import java.net.Socket;
 
 
 public class TurboCarComponent extends JPanel implements Runnable, KeyListener, ComponentListener {
-    int fps = 110;                                               //       FPS
-    public static int BASE_TILE_SIZE = 16;                  // one block 16x16
-    public static final double scale = 1;                         //     SCALE
+
+    static MyCharacterFace myCharacterFace;
+
+    public static final String VOCAB_CHANGED = "VOCAB_CHANGED";
+    public static final String REMAIN_TIME_CHANGED = "REMAIN_TIME_CHANGED";
+
+    int fps = 120;                                                     //      FPS
+    public static int BASE_TILE_SIZE = 16;                            //     one block 16x16
+    public static final double scale = 1;                             //     SCALE
     public static int TILE_SIZE = (int) (BASE_TILE_SIZE * scale);
 
-    public static final double initialScale = 2.5;
+    public static final double INITIAL_SCALE = 2.5;
+
     boolean upPressed = false;
     boolean downPressed = false;
     boolean leftPressed = false;
     boolean rightPressed = false;
     boolean switch01 = false;
+
     int TARGET_TIME = 1000000000 / fps;
 
     String serverName = "localhost";
 
-    UpdateMeFriendAndItem updateMeFriendAndItems;
+    Updater updater;
+
     Car car;
     BufferedImage carImage = null;
     Thread mainLoopThread;
     GameMap gameMap = new GameMap();
     GameServer server;
+
     Dimension selfSize = new Dimension(400, 400);
 
+    Socket socketToHost;
 
-    public TurboCarComponent() throws IOException, ClassNotFoundException {
+
+    public TurboCarComponent() throws IOException, ClassNotFoundException, FontFormatException{
+        myCharacterFace = new MyCharacterFace();
         gameMap = new GameMap();
-
-        init();  // graphic component size
-
-
-        server = new GameServer(gameMap, 8888);
-        server.start();
-        while (server.socketToHost == null) {
-            try {
-                Thread.sleep(50);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        // 1. start server
-
-        server.connectRemote(serverName, 8888);
-        // 2. crate socket communication
-
-        Command retComand = server.registerCar(new Car());
-        car = (Car) retComand.p1;
-        //3. register 1 car
-
-        System.out.println("after reg car " + car);
-
-        updateMeFriendAndItems = new UpdateMeFriendAndItem(car, server);
-
-        updateMeFriendAndItems.start();
-
-    }
-
-    private void init() {
-
-
         mainLoopThread = new Thread(this);
-
         mainLoopThread.start();
-
         this.addKeyListener(this);
-
         this.addComponentListener(this);
 
+
+        server = new GameServer(gameMap);
+        server.start();
+        // 1. start server
+
+        socketToHost = new Socket(serverName, GameServer.PORT);
+        // 2. crate socket communication
+
+        updater = new Updater(socketToHost, this);
+        car = updater.command_registerCar();
+        //3. register 1 car
+
+        System.out.println("reg. car success " + car);
+
+        updater.start();
     }
 
 
     public Dimension getPrefferedSize() {
-        int minX = (int)(TILE_SIZE * gameMap.getColumnSize() * initialScale);
-        int minY = ((int) (TILE_SIZE * gameMap.getRowSize() * initialScale));
+        int minX = (int) (TILE_SIZE * gameMap.getColumnSize() * INITIAL_SCALE);
+        int minY = ((int) (TILE_SIZE * gameMap.getRowSize() * INITIAL_SCALE));
 
         return new Dimension(minX, minY);
     }
 
 
-    private void readKeyDirection() {
+    private synchronized void readKeyDirection() {
         if (upPressed) {
             try {
                 if (gameMap.isWallType(car.getRow() - 1, car.getColumn())) return;
@@ -246,7 +238,6 @@ public class TurboCarComponent extends JPanel implements Runnable, KeyListener, 
 
     ///////////////////////////////   PAINT COMPONENT
     public void paintComponent(Graphics g) {
-        super.paintComponents(g);
 
         g.drawImage(gameMap.getBackgroundImage(), 0, 0, selfSize.width, selfSize.height, null);
 
@@ -257,33 +248,39 @@ public class TurboCarComponent extends JPanel implements Runnable, KeyListener, 
         int carSizeX = (int) (TILE_SIZE / rescaleX);
         int carSizeY = (int) (TILE_SIZE / rescaleY);
 
-        updateMeFriendAndItems.drawItems(g, rescaleX, rescaleY, carSizeX, carSizeY);
+        updater.drawItems(g, rescaleX, rescaleY, carSizeX, carSizeY);     //// updater draw draw and draw
 
         BufferedImage goodImage = Car.rotate(carImage, car.headAngle);
-        g.drawImage(goodImage, (int) (car.x / rescaleX), (int) (car.y / rescaleY), carSizeX, carSizeY, null);
+        int tmpx = (int) (car.x / rescaleX);
+        int tmpy = (int) (car.y / rescaleY);
+        g.drawImage(goodImage, tmpx, tmpy, carSizeX, carSizeY, null);
         g.setColor(Color.white);
-        g.drawRect((int) (car.x / rescaleX), (int) (car.y / rescaleY), carSizeX, carSizeY);
+        g.drawRect(tmpx, tmpy, carSizeX, carSizeY);
+        g.drawString(car.name, tmpx, tmpy - 10);
 
-        if (updateMeFriendAndItems.stopFlag) {
+        if (updater.offlineFlag) {
+            g.drawString("Offline", 20, 15);
             g.setColor(Color.red);
-        } else g.setColor(Color.green);
-        g.fillArc(5,5,10,10,0,360);
+        } else {
+            g.drawString(updater.getGameState(), 20, 15);
+            g.setColor(Color.green);
+        }
+        g.fillArc(5, 5, 10, 10, 0, 360);
+
+
         switch01 = !switch01;
     }
 
-    public void actionConnect(String hostName) throws IOException , ClassNotFoundException{
-        server.connectRemote(hostName, 8888);
+    public void actionConnect(String hostName) throws IOException, ClassNotFoundException {
 
-        Command retCommand = server.registerCar(new Car());
-        Car ccc = (Car) retCommand.p1;
-        car = ccc;
+        updater.command_bye();
+        updater.offlineFlag = true;
 
-        gameMap = new GameMap((int[][]) retCommand.p2);
-        updateMeFriendAndItems.stopFlag = true;
-
-        updateMeFriendAndItems = new UpdateMeFriendAndItem(ccc, server);
-        updateMeFriendAndItems.start();
-      //  updateMeFriendAndItems.setCar(ccc);
+        socketToHost = new Socket(hostName, GameServer.PORT);
+        updater = new Updater(socketToHost, this);
+        car = updater.command_registerCar();
+        gameMap = new GameMap(updater.mapData);
+        updater.start();
     }
 
     public static void main(String[] args) {
@@ -295,9 +292,7 @@ public class TurboCarComponent extends JPanel implements Runnable, KeyListener, 
         TurboCarComponent turboCarComponent;
         try {
             turboCarComponent = new TurboCarComponent();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (ClassNotFoundException e) {
+        } catch (IOException | ClassNotFoundException | FontFormatException e) {
             throw new RuntimeException(e);
         }
         f.add(turboCarComponent, BorderLayout.CENTER);
@@ -311,34 +306,28 @@ public class TurboCarComponent extends JPanel implements Runnable, KeyListener, 
 
     @Override
     public void keyTyped(KeyEvent e) {
-        try {
-
-            if (e.getKeyChar() == 'x') {
-                System.out.println(" PRESS FUCKING X");
-
-                server.connectRemote(serverName, 8888);
-
-                Command retCommand = server.registerCar(new Car());
-                car = (Car) retCommand.p1;
-
-                gameMap = new GameMap((int[][]) retCommand.p2);
-                updateMeFriendAndItems.setCar(car);
-
-            } else if (e.getKeyChar() == 'y') {
-                server.getFriends();
-            }
-
-        } catch (ConnectException ex) {
-            System.out.println(">>>> Error: Can't connect remote host.");
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        } catch (ClassNotFoundException ex) {
-            System.out.println(">>>> Error: Object serialize error.");
-        }
+//        try {
+//
+//            if (e.getKeyChar() == 'y') {
+//                updater.command_getFriends();
+//            }
+//
+//        } catch (ConnectException ex) {
+//            System.out.println(">>>> Error: Can't connect remote host.");
+//        } catch (IOException ex) {
+//            ex.printStackTrace();
+//        } catch (ClassNotFoundException ex) {
+//            System.out.println(">>>> Error: Object serialize error.");
+//        }
     }
 
     @Override
     public void keyPressed(KeyEvent e) {
+        upPressed = false;
+        downPressed = false;
+        leftPressed = false;
+        rightPressed = false;
+
         switch (e.getKeyCode()) {
             case KeyEvent.VK_W:
                 upPressed = true;
@@ -358,20 +347,20 @@ public class TurboCarComponent extends JPanel implements Runnable, KeyListener, 
     @Override
     public void keyReleased(KeyEvent e) {
 
-        switch (e.getKeyCode()) {
-            case KeyEvent.VK_W:
-                upPressed = false;
-                break;
-            case KeyEvent.VK_S:
-                downPressed = false;
-                break;
-            case KeyEvent.VK_A:
-                leftPressed = false;
-                break;
-            case KeyEvent.VK_D:
-                rightPressed = false;
-                break;
-        }
+//        switch (e.getKeyCode()) {
+//            case KeyEvent.VK_W:
+//                upPressed = false;
+//                break;
+//            case KeyEvent.VK_S:
+//                downPressed = false;
+//                break;
+//            case KeyEvent.VK_A:
+//                leftPressed = false;
+//                break;
+//            case KeyEvent.VK_D:
+//                rightPressed = false;
+//                break;
+ //       }
     }
 
     @Override
@@ -400,5 +389,16 @@ public class TurboCarComponent extends JPanel implements Runnable, KeyListener, 
     @Override
     public void componentHidden(ComponentEvent e) {
 
+    }
+
+    public boolean actionRestart() throws IOException, ClassNotFoundException{
+        return updater.command_restartGame();
+    }
+
+
+    public void updateScreen(int remainTime, String currentVocab) {
+
+        firePropertyChange(TurboCarComponent.REMAIN_TIME_CHANGED, 0, remainTime);
+        firePropertyChange(TurboCarComponent.VOCAB_CHANGED, 0, currentVocab);
     }
 }
