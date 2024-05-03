@@ -203,24 +203,24 @@ public class Updater extends Thread {
                         oldRow = turboCarComponent.car.getRow();
 
                     }
-                    sleep(50);
+                    sleep(10);
                     delayTick1++;
                     delayTick2++;
                     blinkDelay++;
 
-                    if (delayTick1 > 30) {
+                    if (delayTick1 > 50) {
                         this.carList = this.command_getFullyFriends();   //
                         buildOutfitCache();
                         delayTick1 = 0;
 
                     }
 
-                    if (delayTick2 > 2) {
+                    if (delayTick2 > 10) {
                         this.carPosList = this.command_getFriends();    //
                         delayTick2 = 0;
                     }
 
-                    if(blinkDelay >5) {
+                    if(blinkDelay >10) {
                         blinkDelay = 0;
                         BLINK_FLAG = !BLINK_FLAG;
                     }
@@ -264,9 +264,8 @@ public class Updater extends Thread {
     }
 
     public void drawItems(Graphics g, double rescaleX, double rescaleY, int carSizeX, int carSizeY) {
-        if (blockList == null) return;
-        if (carPosList == null) return;
 
+        if (carPosList == null) return;
         for (CarPos cp : carPosList) {   // draw multiplayer car
             if (cp == null) continue;
             if (cp.getId() == car.getId()) continue;
@@ -280,10 +279,11 @@ public class Updater extends Thread {
                     carSizeX, carSizeY, null);
         }
 
+
+        if (blockList == null) return;
         if (blockList.size() == 0) return;
-
-
         BlockOfChar currentBlock = blockList.get(0);
+
         currentBlock.drawImageWithBlink(g, rescaleX, rescaleY);
 
         if (blockList.size() >= 2) {

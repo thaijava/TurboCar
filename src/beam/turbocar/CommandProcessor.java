@@ -14,6 +14,8 @@ class CommandProcessor extends Thread {
 
     int pid;
 
+    boolean stopFlag = false;
+
     boolean activeFlag = true;
 
     public CommandProcessor(Socket clientSocket, GameServer gameServer) {
@@ -32,9 +34,9 @@ class CommandProcessor extends Thread {
             ObjectOutputStream ooOut;
             ObjectInputStream ooIn = new ObjectInputStream(clientSocket.getInputStream());
 
-            Command cc = (Command) ooIn.readObject();
+            Command cc = (Command) ooIn.readObject();  // OBJECT READ COMMAND
             System.out.println(cc.command);
-            while (cc.command != null) {
+            while (cc.command != null && !stopFlag ) {
                 switch (cc.command) {
                     case Command.COMMAND_REQ_MAP:
 
@@ -121,8 +123,11 @@ class CommandProcessor extends Thread {
 
                 cc = (Command) ooIn.readObject();
             }
+
         } catch (IOException e) {
             System.out.println("Player disconnect. " + pid);
+            e.printStackTrace();
+            stopFlag = true;
         } catch (ClassNotFoundException e) {
             System.out.println(">>>> CommandProcessor: HANDLE CLIENT COMMAND FAIL: Class not found." + pid);
             System.out.println(" fail class not found");

@@ -18,7 +18,7 @@ public class TurboCarComponent extends JPanel implements Runnable, KeyListener, 
     public static final String VOCAB_CHANGED = "VOCAB_CHANGED";
     public static final String REMAIN_TIME_CHANGED = "REMAIN_TIME_CHANGED";
 
-    int fps = 120;                                                     //      FPS
+    int fps = 110;                                                     //      FPS
     public static int BASE_TILE_SIZE = 16;                            //     one block 16x16
     public static final double scale = 1;                             //     SCALE
     public static int TILE_SIZE = (int) (BASE_TILE_SIZE * scale);
@@ -72,6 +72,29 @@ public class TurboCarComponent extends JPanel implements Runnable, KeyListener, 
 
         updater.start();
     }
+
+    public TurboCarComponent(String testMode) throws IOException, ClassNotFoundException, FontFormatException{
+        myCharacterFace = new MyCharacterFace();
+        gameMap = new GameMap();
+        mainLoopThread = new Thread(this);
+        mainLoopThread.start();
+        this.addKeyListener(this);
+        this.addComponentListener(this);
+
+        server = new GameServer(gameMap);
+
+        socketToHost = new Socket(serverName, GameServer.PORT);
+        // 2. crate socket communication
+
+        updater = new Updater(socketToHost, this);
+        car = updater.command_registerCar();
+        //3. register 1 car
+
+        System.out.println("reg. car success " + car);
+
+        updater.start();
+    }
+
 
 
     public Dimension getPrefferedSize() {
@@ -273,7 +296,13 @@ public class TurboCarComponent extends JPanel implements Runnable, KeyListener, 
 
     public void actionConnect(String hostName) throws IOException, ClassNotFoundException {
 
-        updater.command_bye();
+
+        try {
+            updater.command_bye();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
         updater.offlineFlag = true;
 
         socketToHost = new Socket(hostName, GameServer.PORT);
@@ -284,23 +313,25 @@ public class TurboCarComponent extends JPanel implements Runnable, KeyListener, 
     }
 
     public static void main(String[] args) {
-        JFrame f = new JFrame();
-
-        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        f.setLayout(new BorderLayout());
-
-        TurboCarComponent turboCarComponent;
-        try {
-            turboCarComponent = new TurboCarComponent();
-        } catch (IOException | ClassNotFoundException | FontFormatException e) {
-            throw new RuntimeException(e);
-        }
-        f.add(turboCarComponent, BorderLayout.CENTER);
-
-        f.setSize(800, 800);
-        f.setLocation(300, 0);
-        f.setVisible(true);
-        turboCarComponent.requestFocus();
+//
+//
+//        JFrame f = new JFrame();
+//
+//        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+//        f.setLayout(new BorderLayout());
+//
+//        TurboCarComponent turboCarComponent;
+//        try {
+//            turboCarComponent = new TurboCarComponent();
+//        } catch (IOException | ClassNotFoundException | FontFormatException e) {
+//            throw new RuntimeException(e);
+//        }
+//        f.add(turboCarComponent, BorderLayout.CENTER);
+//
+//        f.setSize(800, 800);
+//        f.setLocation(300, 0);
+//        f.setVisible(true);
+//        turboCarComponent.requestFocus();
     }
 
 
