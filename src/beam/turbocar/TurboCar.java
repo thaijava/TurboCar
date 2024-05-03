@@ -167,7 +167,7 @@ public class TurboCar extends JFrame {
 
     private void connectMenuSelected() {
         connectMenu.setSelected(false);
-        String inputHostName = JOptionPane.showInputDialog("Remote Host:", "localhost");
+        String inputHostName = JOptionPane.showInputDialog("Remote Host:", "192.168.50.55");
         if (inputHostName == null) return;
 
         try {
