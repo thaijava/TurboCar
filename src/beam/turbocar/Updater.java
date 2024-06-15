@@ -15,12 +15,12 @@ public class Updater extends Thread {
     Socket socketToHost;
     Car car;
 
-    private TurboCarComponent turboCarComponent;
+    private final TurboCarComponent turboCarComponent;
   //  private Car car;
     private Car[] carList;
     private CarPos[] carPosList;
 
-    private HashMap<Long, BufferedImage> outfitCache = new HashMap<>();
+    private final HashMap<Long, BufferedImage> outfitCache = new HashMap<>();
 
     boolean offlineFlag = false;
 
@@ -87,7 +87,7 @@ public class Updater extends Thread {
         ooIn = new ObjectInputStream(socketToHost.getInputStream());
         Command retCommand = (Command) ooIn.readObject();
 
-        Car carList[] = (Car[]) retCommand.p1;
+        Car[] carList = (Car[]) retCommand.p1;
         int remainTime = (int) retCommand.p2;
         String currentVocab = (String) retCommand.p3;
         turboCarComponent.updateScreen(remainTime, currentVocab);
@@ -180,9 +180,7 @@ public class Updater extends Thread {
         ooIn = new ObjectInputStream(socketToHost.getInputStream());
         Command retCommand = (Command) ooIn.readObject();
         String ans = retCommand.command;
-        if (ans.equals("error")) return false;
-
-        return true;
+        return !ans.equals("error");
     }
 
     public void run() {

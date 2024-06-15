@@ -9,6 +9,7 @@ import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Random;
 
 
 public class TurboCarComponent extends JPanel implements Runnable, KeyListener, ComponentListener {
@@ -23,12 +24,12 @@ public class TurboCarComponent extends JPanel implements Runnable, KeyListener, 
     public static final double scale = 1;                             //     SCALE
     public static int TILE_SIZE = (int) (BASE_TILE_SIZE * scale);
 
-    public static final double INITIAL_SCALE = 2.5;
+    double initialScale = 2.5;
 
-    boolean upPressed = false;
-    boolean downPressed = false;
-    boolean leftPressed = false;
-    boolean rightPressed = false;
+    public boolean upPressed = false;
+    public boolean downPressed = false;
+    public boolean leftPressed = false;
+    public boolean rightPressed = false;
     boolean switch01 = false;
 
     int TARGET_TIME = 1000000000 / fps;
@@ -41,12 +42,16 @@ public class TurboCarComponent extends JPanel implements Runnable, KeyListener, 
     BufferedImage carImage = null;
     Thread mainLoopThread;
     GameMap gameMap = new GameMap();
-    GameServer server;
+    GameServer gameServer;
 
     Dimension selfSize = new Dimension(400, 400);
 
     Socket socketToHost;
 
+    public String mode = "";
+
+    String[] PATH = {"up", "left", "left", "down", "right", "right", "up", "right"};
+    int   PATH_INDEX = 0;
 
     public TurboCarComponent() throws IOException, ClassNotFoundException, FontFormatException{
         myCharacterFace = new MyCharacterFace();
@@ -57,8 +62,8 @@ public class TurboCarComponent extends JPanel implements Runnable, KeyListener, 
         this.addComponentListener(this);
 
 
-        server = new GameServer(gameMap);
-        server.start();
+        gameServer = new GameServer(gameMap);
+        gameServer.start();
         // 1. start server
 
         socketToHost = new Socket(serverName, GameServer.PORT);
@@ -74,6 +79,8 @@ public class TurboCarComponent extends JPanel implements Runnable, KeyListener, 
     }
 
     public TurboCarComponent(String testMode) throws IOException, ClassNotFoundException, FontFormatException{
+        mode = testMode;
+
         myCharacterFace = new MyCharacterFace();
         gameMap = new GameMap();
         mainLoopThread = new Thread(this);
@@ -81,7 +88,7 @@ public class TurboCarComponent extends JPanel implements Runnable, KeyListener, 
         this.addKeyListener(this);
         this.addComponentListener(this);
 
-        server = new GameServer(gameMap);
+        gameServer = new GameServer(gameMap);
 
         socketToHost = new Socket(serverName, GameServer.PORT);
         // 2. crate socket communication
@@ -97,9 +104,9 @@ public class TurboCarComponent extends JPanel implements Runnable, KeyListener, 
 
 
 
-    public Dimension getPrefferedSize() {
-        int minX = (int) (TILE_SIZE * gameMap.getColumnSize() * INITIAL_SCALE);
-        int minY = ((int) (TILE_SIZE * gameMap.getRowSize() * INITIAL_SCALE));
+    public Dimension getPreferredSize() {
+        int minX = (int) (TILE_SIZE * gameMap.getColumnSize() * initialScale);
+        int minY = ((int) (TILE_SIZE * gameMap.getRowSize() * initialScale));
 
         return new Dimension(minX, minY);
     }
@@ -110,7 +117,7 @@ public class TurboCarComponent extends JPanel implements Runnable, KeyListener, 
             try {
                 if (gameMap.isWallType(car.getRow() - 1, car.getColumn())) return;
             } catch (IndexOutOfBoundsException e) {
-                car.row = server.getGameMapObject().getRowSize();
+                car.row = gameServer.getGameMapObject().getRowSize();
                 car.y = car.row * TILE_SIZE;
             }
 
@@ -173,7 +180,7 @@ public class TurboCarComponent extends JPanel implements Runnable, KeyListener, 
             try {
                 if (gameMap.isWallType(car.getRow(), car.getColumn() - 1)) return;
             } catch (IndexOutOfBoundsException e) {
-                car.column = server.getGameMapObject().getColumnSize();
+                car.column = gameServer.getGameMapObject().getColumnSize();
                 car.x = car.column * TILE_SIZE;
             }
 
@@ -300,7 +307,7 @@ public class TurboCarComponent extends JPanel implements Runnable, KeyListener, 
         try {
             updater.command_bye();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            // do nothing
         }
 
         updater.offlineFlag = true;
@@ -309,6 +316,7 @@ public class TurboCarComponent extends JPanel implements Runnable, KeyListener, 
         updater = new Updater(socketToHost, this);
         car = updater.command_registerCar();
         gameMap = new GameMap(updater.mapData);
+
         updater.start();
     }
 
@@ -354,10 +362,8 @@ public class TurboCarComponent extends JPanel implements Runnable, KeyListener, 
 
     @Override
     public void keyPressed(KeyEvent e) {
-        upPressed = false;
-        downPressed = false;
-        leftPressed = false;
-        rightPressed = false;
+
+        upPressed = downPressed = leftPressed = rightPressed = false;
 
         switch (e.getKeyCode()) {
             case KeyEvent.VK_W:
@@ -431,5 +437,13 @@ public class TurboCarComponent extends JPanel implements Runnable, KeyListener, 
 
         firePropertyChange(TurboCarComponent.REMAIN_TIME_CHANGED, 0, remainTime);
         firePropertyChange(TurboCarComponent.VOCAB_CHANGED, 0, currentVocab);
+    }
+
+    public GameMap getGameMap() {
+        return gameMap;
+    }
+
+    public Car getCar() {
+        return car;
     }
 }

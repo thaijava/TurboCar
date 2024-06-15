@@ -52,8 +52,8 @@ public class TurboCar extends JFrame {
 
         add(turboCarComponent, BorderLayout.CENTER);
 
-        this.setPreferredSize(turboCarComponent.getPrefferedSize());
-        this.setMaximumSize(turboCarComponent.getPrefferedSize());
+        this.setPreferredSize(turboCarComponent.getPreferredSize());
+        this.setMaximumSize(turboCarComponent.getPreferredSize());
 
         this.pack();
 
@@ -207,7 +207,7 @@ public class TurboCar extends JFrame {
     /**
      * @param args the command line arguments
      */
-    public static void main(String args[]) {
+    public static void main(String[] args) {
 
         /* Create and display the form */
 
@@ -219,7 +219,5 @@ public class TurboCar extends JFrame {
             throw new RuntimeException(e);
         }
 
-
     }
-
 }

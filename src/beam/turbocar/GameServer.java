@@ -29,7 +29,6 @@ public class GameServer extends Thread {
 
     public void run() {                                     /////////////////        run() of MapServer
 
-
         ServerSocket serverSocket;
         try {
             serverSocket = new ServerSocket(PORT);
@@ -47,7 +46,7 @@ public class GameServer extends Thread {
                 CommandProcessor ccc = new CommandProcessor(clientSocket, this);
                 ccc.start();
 
-                carList.removeIf(e -> e.activeFlag == false);
+                carList.removeIf(e -> !e.activeFlag);
                 System.gc();
 
                 System.out.println("\n Active processor:" + carList.size());

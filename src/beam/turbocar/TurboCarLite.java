@@ -1,4 +1,5 @@
 package beam.turbocar;
+import beam.turbocar.ai.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,6 +30,10 @@ public class TurboCarLite extends JFrame{
 
         turboCarComponent = new TurboCarComponent("test");
         initComponents();
+
+        AutoDrive ai= new AutoDrive(turboCarComponent);
+        ai.start();
+
         turboCarComponent.setFocusable(true);
         turboCarComponent.addPropertyChangeListener(new PropertyChangeListener() {
             @Override
@@ -45,8 +50,10 @@ public class TurboCarLite extends JFrame{
 
         add(turboCarComponent, BorderLayout.CENTER);
 
-        this.setPreferredSize(turboCarComponent.getPrefferedSize());
-        this.setMaximumSize(turboCarComponent.getPrefferedSize());
+        turboCarComponent.initialScale = 1.8;
+
+        this.setPreferredSize(turboCarComponent.getPreferredSize());
+        this.setMaximumSize(turboCarComponent.getPreferredSize());
 
         this.pack();
 
@@ -200,7 +207,7 @@ public class TurboCarLite extends JFrame{
     /**
      * @param args the command line arguments
      */
-    public static void main(String args[]) {
+    public static void main(String[] args) {
 
         /* Create and display the form */
 

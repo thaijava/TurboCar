@@ -6,9 +6,9 @@ import java.io.*;
 import java.util.Random;
 
 public class Block implements  Serializable{
-    static final int TYPE_BACKGROUND=0;
-    static final int TYPE_WALL=1;
-    static final int TYPE_CAR=9;
+    public static final int TYPE_BACKGROUND=0;
+    public static final int TYPE_WALL=1;
+    public static final int TYPE_CAR=9;
     byte[] imageByte;
 
     long id;

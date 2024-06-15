@@ -11,7 +11,7 @@ public class GameMap implements Serializable{
     private int column;
     String fileName = "asset/map.txt";
 
-    int mapData[][];
+    int[][] mapData;
 
 
     BlockBackground blockBackground = new BlockBackground();
@@ -51,7 +51,7 @@ public class GameMap implements Serializable{
             this.column = w;
             this.row = h;
 
-            String allLine[] = new String[row];
+            String[] allLine = new String[row];
 
             String space = "00000000000000000000";
             while (space.length() < column) space = space + space;
@@ -94,13 +94,10 @@ public class GameMap implements Serializable{
     }
 
     public boolean isWallType(int r, int c) throws IndexOutOfBoundsException {
-        if(mapData[r][c] == Block.TYPE_WALL) return true;
-
-        return false;
+        return mapData[r][c] == Block.TYPE_WALL;
     }
     public boolean isBackgroundType(int r, int c) throws IndexOutOfBoundsException {
-        if(mapData[r][c] == Block.TYPE_BACKGROUND) return true;
-        return false;
+        return mapData[r][c] == Block.TYPE_BACKGROUND;
     }
 
     public BufferedImage getBackgroundImage() {

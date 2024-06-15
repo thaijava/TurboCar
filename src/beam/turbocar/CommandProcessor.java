@@ -7,7 +7,7 @@ import java.util.Random;
 
 class CommandProcessor extends Thread {
     public static int PS_ID;
-    private Socket clientSocket;
+    private final Socket clientSocket;
     GameServer server;
 
     Car car;
@@ -88,7 +88,7 @@ class CommandProcessor extends Thread {
                         break;
 
                     case Command.COMMAND_GET_ALL_FRIENDS:
-                        Car carList[] = this.extractCar();
+                        Car[] carList = this.extractCar();
                         retCommand = new Command("success", carList, server.rule.getRemainTime(), server.rule.getCurrentGameingWord());
 
                         ooOut = new ObjectOutputStream(clientSocket.getOutputStream());
@@ -138,7 +138,7 @@ class CommandProcessor extends Thread {
 
     private CarPos[] extractCarPos() {
         Iterator<CommandProcessor> i = server.carList.iterator();
-        CarPos ret[] = new CarPos[server.carList.size()];
+        CarPos[] ret = new CarPos[server.carList.size()];
         int k = 0;
         while (i.hasNext()) {
             CommandProcessor e = i.next();
@@ -151,7 +151,7 @@ class CommandProcessor extends Thread {
     }
     private Car[] extractCar() {
         Iterator<CommandProcessor> i = server.carList.iterator();
-        Car ret[] = new Car[server.carList.size()];
+        Car[] ret = new Car[server.carList.size()];
         int k = 0;
         while (i.hasNext()) {
             CommandProcessor e = i.next();

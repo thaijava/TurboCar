@@ -15,13 +15,13 @@ public class MyCharacterFace {
 
     Font font;
 
-    private String fileName="asset/CSChatThai.otf";
+    private final String fileName="asset/CSChatThai.otf";
     private final String normalFace = " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890.,/\\:;[]{}()#@!$%&*=+-" +
             "กขฃคฅฆงจฉชซฌญฎฏฐฑฒณดตถทธนบปผฝพฟภมยรลวศษสหฬอฮ";
     private final String spacialUpperFace = "  ่  ้  ๊  ๋  ็   ิ  ี  ึ   ื   ื  ั";
     private final String spacialLowerFace = "  ุ  ู ";
 
-    private HashMap<String, BufferedImage> hashMap = new HashMap<>(100);
+    private final HashMap<String, BufferedImage> hashMap = new HashMap<>(100);
 
     Color bgColor = Color.yellow;
 

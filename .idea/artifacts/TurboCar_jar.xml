@@ -1,6 +1,6 @@
 <component name="ArtifactManager">
   <artifact type="jar" name="TurboCar:jar">
-    <output-path>$PROJECT_DIR$/out/artifacts/TurboCar_jar</output-path>
+    <output-path>$PROJECT_DIR$/../../temp/TurboCar_jar</output-path>
     <root id="archive" name="TurboCar.jar">
       <element id="module-output" name="TurboCar" />
     </root>
